@@ -1,13 +1,13 @@
-﻿  # Table of contents
+# Table of contents
 
-  * [Cybersecurity Challenge Writeups](README.md)
+* [Cybersecurity Challenge Writeups](README.md)
 
-  ## HackTheBox
+## HackTheBox
 
-  * [Onboarding](HackTheBox/Onboarding.md)
+* [Onboarding](HackTheBox/Onboarding.md)
+* [Support](hackthebox/support.md)
+* [new writeup](hackthebox/new-writeup.md)
 
-  * [Support](HackTheBox/test.docx)
+## TryHackMe
 
-  ## TryHackMe
-
-  * [Onboarding](TryHackMe/Onboarding.md)
+* [Onboarding](TryHackMe/Onboarding.md)
