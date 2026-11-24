@@ -6,7 +6,7 @@
 
   * [Onboarding](HackTheBox/Onboarding.md)
 
-  * [Support](HackTheBox/newtest.md)
+  * [Support](HackTheBox/test.docx)
 
   ## TryHackMe
 
