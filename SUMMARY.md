@@ -4,4 +4,8 @@
 
 ## TryHackMe
 
-* [challenge](tryhackme/new-challenge-awaits.md)
+* [challenge](tryhackme/challenge.md)
+
+## HackTheBox
+
+* [challenge](hackthebox/challenge.md)
