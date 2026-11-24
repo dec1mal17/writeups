@@ -1,22 +1,11 @@
-\# Table of contents
+﻿# Table of contents
 
+* [Introduction](README.md)
 
+## HackTheBox
 
-\* \[Introduction](README.md)
+* [Onboarding](HackTheBox/Onboarding.md)
 
+## TryHackMe
 
-
-\## HackTheBox
-
-
-
-\* \[Onboarding](HackTheBox/onboarding.md)
-
-
-
-\## TryHackMe
-
-
-
-\* \[Onboarding](TryHackMe/onboarding.md)
-
+* [Onboarding](TryHackMe/Onboarding.md)
