@@ -6,11 +6,17 @@
 
 
 
-\## Writeups
+\## HackTheBox
 
 
 
-\* \[Box One](writeups/box-one.md)
+\* \[Onboarding](HackTheBox/onboarding.md)
 
-\* \[Box Two](writeups/box-two.md)
+
+
+\## TryHackMe
+
+
+
+\* \[Onboarding](TryHackMe/onboarding.md)
 
