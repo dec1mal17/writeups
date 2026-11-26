@@ -153,7 +153,9 @@ The password-spraying attempt revealed that `r.williams` was using the same pass
 
 After discovering `r.williams`, we examined his outbound object-control relationships in BloodHound. We identified that he had the necessary permissions to modify the RBCD configuration of the domain controller. This meant that we could potentially configure an attacker-controlled account to impersonate other users when accessing services hosted by the target computer.
 
-`More information on this attribute can be found in my deep analysis writeups` &#x20;
+`More information on this attribute can be found in my deep analysis writeups`
+
+[`Forward-Deep Dive Analysis`  ](forward-technical-deep-dive.md)
 
 ### Road to Administrator's Flag
 
