@@ -5,6 +5,7 @@
 ## TryHackMe
 
 * [challenge](tryhackme/challenge.md)
+* [Forward](tryhackme/forward.md)
 
 ## HackTheBox
 
