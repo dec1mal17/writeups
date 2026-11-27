@@ -38,7 +38,7 @@ Forward is a practical challenge that is built around an assumed breach scenario
 * `r.williams` → password reuse and access to RBCD configuration.
 * `ATTACKERSYSTEM$` → attacker-controlled delegation principal.
 * `Administrator` → impersonated identity.
-* SYSTEM shell on DC01 → final execution context.
+* SYSTEM shell on DC01$ → final execution context.
 
 **Main concepts involved** \
 nmap,RDP, KeePass, Active Directory, Bloodhound, Password spraying, Kerberos, RBCD, Impacket<br>

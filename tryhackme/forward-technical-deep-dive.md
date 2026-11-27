@@ -68,7 +68,7 @@ We learnt that KeePass 2.x supports using the current Windows user account as on
 
 #### **Why does it exist ?**&#x20;
 
-Active Directory uses Access Control Lists (ACLs) to determine which security principals can perform specific actions on directory objects. A Discretionary Access Control List (DACL) contains Access Control Entries (ACEs), which specify the security principal, the permissions granted or denied, and the object or attribute to which those permissions apply..&#x20;
+Active Directory uses Access Control Lists (ACLs) to determine which security principals can perform specific actions on directory objects. A Discretionary Access Control List (DACL) contains Access Control Entries (ACEs), which specify the security principal, the permissions granted or denied, and the object or attribute to which those permissions apply.
 
 | Right                            | Meaning                                       |
 | -------------------------------- | --------------------------------------------- |
@@ -114,7 +114,7 @@ Traditional Constrained Delegation is configured on the front-end service and us
 
 * `DC01$` — the target computer.
 * `ATTACKERSYSTEM$` — an attacker-controlled machine account.
-* `Administrator` — the user whose identity the attacker wants to impersonat
+* `Administrator` — the user whose identity the attacker wants to impersonate.
 
 The target computer can be configured to allow ATTACKERSYSTEM$ to delegate authentication on behalf of Administrator to its services.&#x20;
 
@@ -137,9 +137,9 @@ This attribute contains a security descriptor that identifies which security pri
 * `ATTACKERSYSTEM$` is the account intended to receive delegation permission.
 * The RBCD configuration establishes the trust between them.
 
-This is where the earlier `AddAllowedToAct` permission becomes important.
+This is where the earlier `AddAllowedToAct`  becomes important.
 
-The permission allows the compromised account to modify the target's delegation configuration, potentially adding an attacker-controlled account to the list of trusted delegators.
+It allows the compromised account to modify the target's delegation configuration, potentially adding an attacker-controlled account to the list of trusted delegators.
 
 #### Where is the security weakness?
 
@@ -178,7 +178,7 @@ We therefore used Impacket;s addcomputer.py for this;
 
 The reason why this is useful is that the target computer's RBCD configuration tells the Key Distribution Centre (KDC)that this principle is authorised to delegate on behalf of other users to its services. Now this creates the opportunity to request a service ticket representing a more privileged user.
 
-<figure><img src="../.gitbook/assets/66da70fd-6ea6-4b1c-9468-1aed551921ea.png" alt=""><figcaption><p>We just configured the target computer(DC01) to trust our machine account(ATTACKERSYSTEM$) for resource based constrained delegation.</p></figcaption></figure>
+<figure><img src="../.gitbook/assets/66da70fd-6ea6-4b1c-9468-1aed551921ea.png" alt=""><figcaption><p>We just configured the target computer(DC01$) to trust our machine account(ATTACKERSYSTEM$) for resource based constrained delegation.</p></figcaption></figure>
 
 #### Requesting a service ticket through Kerberos Delegation
 
@@ -192,9 +192,9 @@ For example, our controlled service principal can request a ticket representing 
 
 **S4U2Proxy - Service for User to Proxy**
 
-Allows a service to use an evidence ticket obtained through S4U2Self to re request a service ticket to another service on behalf of that user.
+Allows a service to use an evidence ticket obtained through S4U2Self to request a service ticket to another service on behalf of that user.
 
-In our case, the objective was to obtain a ticket for the CIFS service on DC
+In our case, the objective was to obtain a ticket for the CIFS service on DC$.
 
 **How this works in Forward**
 
