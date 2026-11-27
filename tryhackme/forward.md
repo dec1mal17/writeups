@@ -1,10 +1,14 @@
 ---
+description: >-
+  Challenge: Forward —
+  TryHackMe                                                                                                             
+  Platform: TryHackMe
 layout:
   width: default
   title:
     visible: true
   description:
-    visible: false
+    visible: true
   tableOfContents:
     visible: true
   outline:
@@ -23,15 +27,17 @@ layout:
 
 # Forward
 
-#### NOTE:&#x20;
+{% embed url="https://tryhackme.com/room/forwardchallenge" %}
 
-This writeup focuses on the practical walkthrough of the Forward challenge, documenting the enumeration process, commands used, key findings, and exploitation steps.
+#### NOTE:
 
-For a deeper understanding of the underlying technologies, protocols, and exploitation techniques, refer to the companion article: [Forward--Technical Deep Dive](forward-technical-deep-dive.md) where I explore the main concepts covered in this challenge in greater detail.
+This writeup focuses on just the practical walkthrough of the Forward challenge.
+
+**For a deeper understanding** of the underlying technologies, protocols, and exploitation techniques, refer to the companion article: [Forward--Technical Deep Dive](forward-technical-deep-dive.md) where I explore the main concepts covered in this challenge in greater detail.
 
 ### Overview
 
-Forward is a practical challenge that is built around an assumed breach scenario. Credentials of the user j.smith and corresponding password is provided and we have to navigate through the compromised Active Directory, move laterally through the domain and escalate our way through the domain.&#x20;
+Forward is a practical challenge that is built around an assumed breach scenario. Credentials of the user j.smith and corresponding password is provided and we have to navigate through the compromised Active Directory, move laterally through the domain and escalate our way through the domain.
 
 * `j.smith` → initial access.
 * `t.jones` → credential discovery and account investigation.
@@ -40,7 +46,7 @@ Forward is a practical challenge that is built around an assumed breach scenario
 * `Administrator` → impersonated identity.
 * SYSTEM shell on DC01$ → final execution context.
 
-**Main concepts involved** \
+**Main concepts involved**\
 nmap,RDP, KeePass, Active Directory, Bloodhound, Password spraying, Kerberos, RBCD, Impacket<br>
 
 ### **Recon**
@@ -51,7 +57,7 @@ nmap,RDP, KeePass, Active Directory, Bloodhound, Password spraying, Kerberos, RB
 
 <figure><img src="../.gitbook/assets/image (1).png" alt=""><figcaption></figcaption></figure>
 
-The above ports were found to be opened.  With the provided credentials we shall start with SMB and LDAP enumeratoin to understand what information the server exposes.
+The above ports were found to be opened. With the provided credentials we shall start with SMB and LDAP enumeratoin to understand what information the server exposes.
 
 Let us first identify the hostname associated with the target IP. We can use NetExec's `--generate-hosts-file` option to generate a hosts file containing the discovered hostname and IP address. We can then add this entry to `/etc/hosts` to ensure that the domain controller can be resolved locally.
 
@@ -76,11 +82,9 @@ We discovered that the Downloads share was readable, but after accessing it, we 
 
 <figure><img src="../.gitbook/assets/image (5).png" alt=""><figcaption></figcaption></figure>
 
-
-
 ### Initial Access and Enumeration
 
-We focus on using bloodhound to enumerate the target. We use bloodhound-python to get a compressed file that we can then ingest to the bloodhound GUI that we will have started on our computer.&#x20;
+We focus on using bloodhound to enumerate the target. We use bloodhound-python to get a compressed file that we can then ingest to the bloodhound GUI that we will have started on our computer.
 
 ```
 // bloodhound-python -u 'j.smith' -p 'JSmith@IT2024' -d ctf.local -ns 10.113.172.120 -c All --zip
@@ -89,7 +93,7 @@ We focus on using bloodhound to enumerate the target. We use bloodhound-python t
 
 <figure><img src="../.gitbook/assets/image (6).png" alt=""><figcaption></figcaption></figure>
 
-After importing the collected data into BloodHound, we examined the `j.smith` account and identified membership in the Remote Desktop Users and AppLocker-Restricted Groups. This provided a reason to investigate the possibility of accessing the machine through RDP.&#x20;
+After importing the collected data into BloodHound, we examined the `j.smith` account and identified membership in the Remote Desktop Users and AppLocker-Restricted Groups. This provided a reason to investigate the possibility of accessing the machine through RDP.
 
 <figure><img src="../.gitbook/assets/image (7).png" alt=""><figcaption></figcaption></figure>
 
@@ -103,7 +107,7 @@ We therefore rdc to j.smith with the credentials provided and open up a powershe
 
 ### Credential Discovery
 
-Something worth checking pops up and we see that under the Document's folder we have a Database.kdbx file which is database file format used by KeePass and KeePass-compatible password managers. It is encrypted and therefore high value target for offline cracking. We therefore need to get in to our local computer so that we can crack it.&#x20;
+Something worth checking pops up and we see that under the Document's folder we have a Database.kdbx file which is database file format used by KeePass and KeePass-compatible password managers. It is encrypted and therefore high value target for offline cracking. We therefore need to get in to our local computer so that we can crack it.
 
 We will there host an smbserver and copy the file to our current working directory
 
@@ -125,7 +129,7 @@ We extracted the password hash from the KeePass database using `keepass2john` an
  john --wordlist=/usr/share/wordlists/rockyou.txt kdbx_hash.txt
 ```
 
-We therefore resorted to checking whether we could find anything related to keepass within the system and we came across a KeePass app. We discovered an installed KeePass application on the system. Interestingly, we were able to access the database by clicking OK without manually entering a master password. This provided an alternative way to access the stored credentials without having to crack the database offline.&#x20;
+We therefore resorted to checking whether we could find anything related to keepass within the system and we came across a KeePass app. We discovered an installed KeePass application on the system. Interestingly, we were able to access the database by clicking OK without manually entering a master password. This provided an alternative way to access the stored credentials without having to crack the database offline.
 
 <figure><img src="../.gitbook/assets/Screenshot 2026-11-26 192124.png" alt=""><figcaption></figcaption></figure>
 
@@ -155,7 +159,7 @@ After discovering `r.williams`, we examined his outbound object-control relation
 
 `More information on this attribute can be found in my deep analysis writeups`
 
-[`Forward-Deep Dive Analysis`  ](forward-technical-deep-dive.md)
+[`Forward-Deep Dive Analysis`](forward-technical-deep-dive.md)
 
 ### Road to Administrator's Flag
 
@@ -195,4 +199,3 @@ We could then use Impacket's `psexec.py` with Kerberos authentication to access 
 ```
 
 <figure><img src="../.gitbook/assets/cc928fe6-c5d7-4a03-aa22-0015acb03e6b.png" alt=""><figcaption></figcaption></figure>
-
