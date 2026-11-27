@@ -1,6 +1,6 @@
 # Table of contents
 
-* [Cybersecurity Challenge Writeups](README.md)
+* [Cybersecurity Technical Writeups](README.md)
 
 ## TryHackMe
 
