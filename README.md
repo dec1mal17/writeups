@@ -1,4 +1,4 @@
-# Cybersecurity Challenge Writeups
+# Cybersecurity Writeups
 
 ## Overview
 
