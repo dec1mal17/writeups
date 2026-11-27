@@ -32,17 +32,17 @@ This writeup focuses on explaining why the techniques used in Forward challenge 
 * Requesting a service ticket through Kerberos delegation.
 * Using the resulting ticket to obtain elevated access.
 
-#### **1. KeePass and Credential Storage**
+### **1. KeePass and Credential Storage**
 
-What is it ?&#x20;
+#### **What is it ?**&#x20;
 
-KeePass is a free, open source password manager that stores your logins notes and sensitive details in a local encrypted database file locked by a master key.
+KeePass is a free, open-source password manager that stores login credentials, notes, and other sensitive information in an encrypted database file, typically using the `.kdbx` format. Access to the database is protected by a composite master key, which can consist of a master password, a key file, a Windows user account key, or a combination of these components.
 
-KeePass comes in two different variants: KeePass 1.x and KeePass 2.x. Both support a number of plugins although 2.x allows more plugins. Mainly communication features are established in 2.x:authentication with the windows user account, remote and shared database editing as well as many plugins allowing communication and authentication with different web browsers databases and more.&#x20;
+KeePass has two main versions: KeePass 1.x and KeePass 2.x. They differ in supported features and key-protection options. For example, KeePass 2.x supports Windows user account integration and Argon2 key derivation, while KeePass 1.x does not. KeePass 2.x also supports additional features through its plugin architecture.
 
 <figure><img src="../.gitbook/assets/Screenshot 2026-11-27 030207.png" alt="" width="563"><figcaption></figcaption></figure>
 
-How it works internally and why it exists
+#### **How it works internally and why it exists**
 
 The password list is saved by default as a.kdbx file but it can be exported to .txt, HTML, XML and CSV. It also supports simultaneous access and simultaneous changes to a shared password file by multiple computers (often by using a shared network drive).
 
@@ -52,25 +52,23 @@ KeePass may be configured to randomize characters input sequence to make it hard
 
 KeePass automatically clears the clipboard sometime after the user has copied one of the passwords into it. It has features that protect against clipboard monitors.
 
-KeePass encrypts the database with the AES, Twofish or ChaCha20 symmetric cipher, where the first two are used in CBC/PKCS7 mode. AES is the default option in both KeePass editions, Twofish is available in KeePass 1.x, ChaCha20 is available only in KeePass 2.35 and higher.
+KeePass encrypts its database using symmetric encryption. KeePass 1.x supports AES and Twofish, while KeePass 2.x supports AES and ChaCha20 by default. Additional encryption algorithms can be made available through plugins. The encryption algorithm is separate from the key derivation function, which transforms the composite master key into the encryption key. KeePass supports AES-KDF, while KeePass 2.x also supports Argon2.
 
-Where the security weakness lies and how it was used in the challenge
-
-From our knowledge we know that KeePass has a plugin architecture. The most important thing is to note that plugins may compromise the security of KeePass because they are written by independent authors and have full access to the keepers database.&#x20;
+#### **Where the security weakness lies and how it was used in the challenge**
 
 KeePass is not inherently vulnerable but the security issue in this was that an accessible .kdbx database (Database.kdbx)contains stored credentials that could be recovered and subsequently used to gain access to other accounts.
 
-One feature that we learnt is that KeePass can make the database dependent on the current Windows user account. If you enable this option, you can only open the database when you are logged in as the same window user when creating the database. In our case this was made possible because just by clicking OK we actually be able to access the database.
+We learnt that KeePass 2.x supports using the current Windows user account as one of the components of a database's composite master key. This means that access can depend on the original Windows user account. However, opening the database by simply clicking OK does not, by itself, prove that this feature was enabled. KeePass can also remember the location of a key file and load it automatically. Therefore, without verifying the database's key configuration, we cannot conclusively determine why the database opened without manually entering a password.
 
 
 
-**2.AddAllowedToAct**
+### **2.AddAllowedToAct**
 
-**AddAllowedToAct** Is a Bloodhound edge which indicates that a security principal has permission to modifiy the resource-base constrained delegation configuration of another object. More specifically  to modify the msDS-Allowed ToActOnBehalfOfOtherIdentity attribute on a target computer account.&#x20;
+`AddAllowedToAct` is a BloodHound edge that represents a security principal's ability to modify the Resource-Based Constrained Delegation (RBCD) configuration of another object. More specifically, it indicates that the principal has sufficient permissions to modify the target object's `msDS-AllowedToActOnBehalfOfOtherIdentity` attribute.
 
-Why does it exist ?&#x20;
+#### **Why does it exist ?**&#x20;
 
-In AD we have permissions(ACEs). A DACL is a list of **Access Control Entries**, each saying _who_ (SID), _allow or deny_, _which right_, _on what_ (the whole object or a specific attribute), and whether it's _inherited_.&#x20;
+Active Directory uses Access Control Lists (ACLs) to determine which security principals can perform specific actions on directory objects. A Discretionary Access Control List (DACL) contains Access Control Entries (ACEs), which specify the security principal, the permissions granted or denied, and the object or attribute to which those permissions apply..&#x20;
 
 | Right                            | Meaning                                       |
 | -------------------------------- | --------------------------------------------- |
@@ -80,11 +78,13 @@ In AD we have permissions(ACEs). A DACL is a list of **Access Control Entries**,
 | `WriteOwner`                     | Take ownership                                |
 | `ExtendedRight`                  | Special actions, such as resetting a password |
 
-Where the security weakness lies
+#### Where the security weakness lies
 
-AddAllowedToAct is not itself an attack or a vulnerability. it is a permission relationship. the security weakness is the inappropriate assignment of that permission which can enable RBCD abuse. In our case r.williams had this level of control and was granted the permission to modify the domain controller's (DC01.ctf.local) delegation configuration.&#x20;
+AddAllowedToAct is not itself an attack or a vulnerability. it is a permission relationship. the security weakness is the inappropriate assignment of that permission which can enable RBCD abuse.&#x20;
 
-How it can be detected and prevented
+In our case r.williams had this level of control and was granted the permission to modify the domain controller's (DC01.ctf.local) delegation configuration.&#x20;
+
+#### How it can be detected and prevented
 
 To mitigate the abuse of the `AddAllowedToAct` permission, organizations should enforce the principle of least privilege by restricting who can modify resource-based constrained delegation settings on Active Directory objects. Regular ACL audits should be conducted to identify and remove excessive permissions, while monitoring changes to the `msDS-AllowedToActOnBehalfOfOtherIdentity` attribute can help detect unauthorized delegation configurations.&#x20;
 
@@ -92,9 +92,9 @@ To add on, organizations should review machine-account creation policies and res
 
 
 
-**3. Resource-Based Constrained Delegation (RBCD)**
+### **3. Resource-Based Constrained Delegation (RBCD)**
 
-**What is Kerberos delegation?**
+#### **What is Kerberos delegation?**
 
 Kerberos delegation is a mechanism in Active Directory that allows a service to access another service on behalf of an authenticated user.
 
@@ -106,11 +106,11 @@ We also have delegation attributes, which lets a service act on behalf of anothe
 | Constrained           | `msDS-AllowedToDelegateTo` (plus `TRUSTED_TO_AUTH_FOR_DELEGATION` for protocol transition) | Same as above                                            |
 | Resource-based (RBCD) | `msDS-AllowedToActOnBehalfOfOtherIdentity` on the **target**                               | Write access to that attribute is enough                 |
 
-How RBCD Works and Traditional Constrained Delegation
+#### How RBCD Works and Traditional Constrained Delegation
 
 Traditional Constrained Delegation is configured on the front-end service and uses an outbound allow-list ("who i can talk to") while RBCD flips that model by configuring the permission directly on the back-end resource which uses an inbound allow-list("who is allowed to talk to me").
 
-For example in our case, imagine:
+**For example in our case, imagine:**
 
 * `DC01$` — the target computer.
 * `ATTACKERSYSTEM$` — an attacker-controlled machine account.
@@ -127,11 +127,11 @@ The important distinction is the direction of control.
 
 <figure><img src="../.gitbook/assets/image (10).png" alt=""><figcaption></figcaption></figure>
 
-Understanding `msDS-AllowedToActOnBehalfOfOtherIdentity`
+#### Understanding `msDS-AllowedToActOnBehalfOfOtherIdentity`
 
 This attribute contains a security descriptor that identifies which security principals are permitted to act on behalf of other users when accessing the resource through Kerberos delegation.&#x20;
 
-In Forward:
+**In Forward:**
 
 * `DC01$` is the target.
 * `ATTACKERSYSTEM$` is the account intended to receive delegation permission.
@@ -141,7 +141,7 @@ This is where the earlier `AddAllowedToAct` permission becomes important.
 
 The permission allows the compromised account to modify the target's delegation configuration, potentially adding an attacker-controlled account to the list of trusted delegators.
 
-Where is the security weakness?
+#### Where is the security weakness?
 
 RBCD becomes a security concern when an attacker obtains sufficient permissions to modify a target computer's delegation configuration.
 
@@ -152,9 +152,9 @@ The consequences can include:
 * **Lateral movement:** The attacker can use the resulting service ticket to authenticate to services on another computer.
 * **Unauthorized delegation:** An attacker can establish a delegation relationship that the organization did not intend.
 
-**4. Machine Account Creation and Kerberos Exploitation**
+### **4. Machine Account Creation and Kerberos Exploitation**
 
-What is a machine account?&#x20;
+#### What is a machine account?&#x20;
 
 In AD, computers have their own accounts, just like users. This account allows the computer to authenticate to the domain, communicate with the DC and access network resources.&#x20;
 
@@ -162,13 +162,13 @@ One important distinction is that computer accounts conventionally end with $.&#
 
 A computer account is essentially a security principal. This means that it has an identity, permissions, and credentials that can be used during authentication.&#x20;
 
-Why it matters in Forward
+#### Why it matters in Forward
 
 Our attack required an account that we controlled and could use as the delegating principle in an RBCD configuration. This is where ATTACKERSYSTEM$ comes in.
 
-Rather than us using an existing computer account that we might not control we created a new machine account that we could manage.
+Rather than using an existing computer account that we might not control we created a new machine account that we could manage.
 
-In Forward, the relationship we wanted was:
+**In Forward, the relationship we wanted was:**
 
 <figure><img src="../.gitbook/assets/image (11).png" alt=""><figcaption></figcaption></figure>
 
@@ -180,23 +180,23 @@ The reason why this is useful is that the target computer's RBCD configuration t
 
 <figure><img src="../.gitbook/assets/66da70fd-6ea6-4b1c-9468-1aed551921ea.png" alt=""><figcaption><p>We just configured the target computer(DC01) to trust our machine account(ATTACKERSYSTEM$) for resource based constrained delegation.</p></figcaption></figure>
 
-Requesting a service ticket through Kerberos Delegation
+#### Requesting a service ticket through Kerberos Delegation
 
 To understand this we need two Kerberos extensions:
 
-S4U2Self - Service for User to Self
+**S4U2Self - Service for User to Self**
 
 Allows a service to request a Kerberos service ticket to itself on behalf of another user.&#x20;
 
 For example, our controlled service principal can request a ticket representing `Administrator`.
 
-S4U2Proxy - Service for User to Proxy
+**S4U2Proxy - Service for User to Proxy**
 
 Allows a service to use an evidence ticket obtained through S4U2Self to re request a service ticket to another service on behalf of that user.
 
 In our case, the objective was to obtain a ticket for the CIFS service on DC
 
-How this works in Forward
+**How this works in Forward**
 
 ATTACKERSYSTEM$\
 |\
@@ -218,11 +218,11 @@ Request a ticket for CIFS/DC01\
 v\
 Administrator service ticket
 
-What did we obtain
+#### What did we obtain
 
 We obtained a Kerberos service ticket representing Administrator for:
 
-`CIFS/DC01`
+`CIFS/DC01`  Service Principal Name(SPN).
 
 CIFS is the service associated with file-sharing access over SMB.
 
@@ -230,7 +230,7 @@ This is important because the ticket is not a universal Administrator login. It 
 
 <figure><img src="../.gitbook/assets/Screenshot 2026-11-26 205622.png" alt=""><figcaption></figcaption></figure>
 
-Using the resulting Ticket to obtain Elevated Access
+#### Using the resulting Ticket to obtain Elevated Access
 
 Now we have an Administrator service ticket for `CIFS/DC01`.
 
@@ -240,7 +240,7 @@ CIFS is associated with SMB, which allows access to network shares and supports 
 
 Tools such as Impacket's PsExec can use SMB authentication to execute commands remotely when the authenticated identity has sufficient privileges.
 
-In Forward, the final progression was:
+**In Forward, the final progression was:**
 
 Administrator CIFS Service Ticket\
 |\
@@ -260,7 +260,7 @@ One important distinction: the Kerberos ticket provided the authentication capab
 
 
 
-Putting the entire attack together&#x20;
+### Putting the entire attack together&#x20;
 
 This is the complete relationship between the concepts we've studied:
 
